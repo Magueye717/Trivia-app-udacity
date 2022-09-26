@@ -113,19 +113,19 @@ def create_app(test_config=None):
     @app.route('/questions/search', methods=['POST'])
     def search_questions():
         body = request.get_json()
-        search_term = body.get('searchTerm', None)
+        search = body.get('searchTerm')
+        questions = Question.query.filter(
+            Question.question.ilike('%'+search+'%')).all()
 
-        if search_term:
-            search_results = Question.query.filter(
-                Question.question.ilike(f'%{search_term}%')).all()
-
+        if len(search) > 0:
+            currentQuestions = paginate_questions(request, questions)
             return jsonify({
                 'success': True,
-                'questions': [question.format() for question in search_results],
-                'total_questions': len(search_results),
-                'current_category': None
+                'questions': currentQuestions,
+                'total_questions': len(questions)
             })
-        abort(404)
+        else:
+            abort(404)
  
 
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
